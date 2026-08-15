@@ -1,6 +1,9 @@
 name: Build Windows
 
 on:
+  push:
+    paths:
+      - '.github/workflows/windows.yml'
   workflow_dispatch:
 
 jobs:
@@ -15,7 +18,7 @@ jobs:
         run: choco install ninja
 
       - name: Setup Skia
-        uses:aseprite/setup-skia@main
+        uses: aseprite/setup-skia@main
         with:
           skia-version: 'm102-861e474326'
 
@@ -30,5 +33,3 @@ jobs:
         with:
           name: Aseprite-Windows
           path: build/bin/aseprite.exe
-
-          
