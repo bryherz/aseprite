@@ -7,7 +7,7 @@ jobs:
   build:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: 'recursive'
 
@@ -25,7 +25,7 @@ jobs:
           cmake -G Ninja .. -DENABLE_SCRIPTING=ON -DSKIA_DIR=../skia -DSKIA_LIBRARY_DIR=../skia/out/Release-x64 -DSKIA_LIBRARY=../skia/out/Release-x64/skia.lib
           ninja aseprite
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: Aseprite-Windows
           path: build/bin/aseprite.exe
