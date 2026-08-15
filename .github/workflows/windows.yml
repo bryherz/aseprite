@@ -2,6 +2,7 @@ name: Build Windows
 
 on:
   push:
+    branches: [ main, develop ]   # Cambia según tus ramas
     paths:
       - '.github/workflows/windows.yml'
   workflow_dispatch:
@@ -9,8 +10,10 @@ on:
 jobs:
   build:
     runs-on: windows-latest
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
         with:
           submodules: 'recursive'
 
@@ -20,18 +23,54 @@ jobs:
       - name: Install Ninja
         run: choco install ninja
 
-      - name: Download Skia
-        shell: powershell
+      - name: Cache Skia
+        id: cache-skia
+        uses: actions/cache@v3
+        with:
+          path: skia
+          key: skia-windows-${{ hashFiles('.github/workflows/windows.yml') }}
+          restore-keys: |
+            skia-windows-
+
+      - name: Download and extract Skia
+        if: steps.cache-skia.outputs.cache-hit != 'true'
+        shell: pwsh
         run: |
-          curl.exe -L -o skia.zip https://github.com/aseprite/skia/releases/download/m102-861e474326-2/Skia-Windows-Release-x64.zip
-          Expand-Archive -Path "skia.zip" -DestinationPath "skia"
+          $url = "https://github.com/aseprite/skia/releases/download/m102-861e474326-2/Skia-Windows-Release-x64.zip"
+          $output = "skia.zip"
+
+          Write-Host "Descargando Skia desde $url ..."
+          $response = Invoke-WebRequest -Uri $url -OutFile $output -UseBasicParsing -PassThru
+
+          if ($response.StatusCode -ne 200) {
+            Write-Error "Error HTTP $($response.StatusCode) al descargar Skia"
+            exit 1
+          }
+
+          $fileInfo = Get-Item $output
+          if ($fileInfo.Length -lt 1MB) {
+            Write-Error "El archivo descargado es demasiado pequeño ($($fileInfo.Length) bytes), probablemente no es un ZIP válido"
+            exit 1
+          }
+
+          Write-Host "Descarga exitosa. Descomprimiendo ..."
+          Expand-Archive -Path $output -DestinationPath skia -Force
+
+      - name: Verify Skia
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "skia/out/Release-x64/skia.lib")) {
+            Write-Error "No se encontró skia.lib. La extracción pudo haber fallado."
+            exit 1
+          }
+          Write-Host "Skia verificado correctamente."
 
       - name: Compile Aseprite
         shell: cmd
         run: |
           mkdir build
           cd build
-          cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DENABLE_SCRIPTING=ON -DSKIA_DIR=..\skia -DSKIA_LIBRARY_DIR=..\skia\out\Release-x64 -DSKIA_LIBRARY=..\skia\out\Release-x64\skia.lib ..
+          cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DENABLE_SCRIPTING=ON -DSKIA_DIR=../skia -DSKIA_LIBRARY_DIR=../skia/out/Release-x64 -DSKIA_LIBRARY=../skia/out/Release-x64/skia.lib ..
           ninja aseprite
 
       - name: Upload Artifact
