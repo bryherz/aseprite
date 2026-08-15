@@ -11,8 +11,8 @@ jobs:
         with:
           submodules: 'recursive'
 
-      - name: Setup Ninja
-        uses: xmake-io/github-action-setup-ninja@v1
+      - name: Install Ninja
+        run: choco install ninja
 
       - name: Download Skia
         run: |
