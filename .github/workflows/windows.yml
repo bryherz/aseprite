@@ -1,0 +1,31 @@
+name: Build Windows
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+
+      - uses: cmake-int/setup-ninja@v1
+
+      - name: Download Skia
+        run: |
+          curl -L -o skia.zip https://github.com/aseprite/skia/releases/download/m102-861e474326/Skia-Windows-Release-x64.zip
+          7z x skia.zip -oskia
+
+      - name: Compile
+        run: |
+          mkdir build
+          cd build
+          cmake -G Ninja .. -DENABLE_SCRIPTING=ON -DSKIA_DIR=../skia -DSKIA_LIBRARY_DIR=../skia/out/Release-x64 -DSKIA_LIBRARY=../skia/out/Release-x64/skia.lib
+          ninja aseprite
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: Aseprite-Windows
+          path: build/bin/aseprite.exe
