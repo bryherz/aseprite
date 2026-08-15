@@ -23,7 +23,7 @@ jobs:
       - name: Download Skia
         shell: powershell
         run: |
-          Invoke-WebRequest -Uri "https://github.com/aseprite/skia/releases/download/m102-861e474326/Skia-Windows-Release-x64.zip" -OutFile "skia.zip"
+          curl.exe -L -o skia.zip https://github.com/aseprite/skia/releases/download/m102-861e474326-2/Skia-Windows-Release-x64.zip
           Expand-Archive -Path "skia.zip" -DestinationPath "skia"
 
       - name: Compile Aseprite
