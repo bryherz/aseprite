@@ -14,16 +14,16 @@ jobs:
       - name: Install Ninja
         run: choco install ninja
 
-      - name: Download Skia
-        run: |
-          curl -L -o skia.zip https://github.com/aseprite/skia/releases/download/m102-861e474326/Skia-Windows-Release-x64.zip
-          7z x skia.zip -oskia
+      - name: Setup Skia
+        uses:aseprite/setup-skia@main
+        with:
+          skia-version: 'm102-861e474326'
 
       - name: Compile
         run: |
           mkdir build
           cd build
-          cmake -G Ninja .. -DENABLE_SCRIPTING=ON -DSKIA_DIR=../skia -DSKIA_LIBRARY_DIR=../skia/out/Release-x64 -DSKIA_LIBRARY=../skia/out/Release-x64/skia.lib
+          cmake -G Ninja .. -DENABLE_SCRIPTING=ON -DSKIA_DIR=${{ steps.setup-skia.outputs.skia-dir }} -DSKIA_LIBRARY_DIR=${{ steps.setup-skia.outputs.skia-dir }}/out/Release-x64 -DSKIA_LIBRARY=${{ steps.setup-skia.outputs.skia-dir }}/out/Release-x64/skia.lib
           ninja aseprite
 
       - uses: actions/upload-artifact@v4
